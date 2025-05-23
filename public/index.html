@@ -28,6 +28,39 @@
             flex-direction: column;
         }
 
+        .timer-container {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10001;
+}
+
+.timer-bar {
+    width: 200px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.timer-progress {
+    height: 100%;
+    background: linear-gradient(45deg, #00f2fe, #4facfe);
+    width: 0%;
+    transition: width 0.1s ease;
+    border-radius: 2px;
+}
+
+.timer-text {
+    color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
         .nav-bar {
             display: flex;
             justify-content: space-between;
@@ -185,50 +218,6 @@
             object-fit: cover;
             opacity: 0.6;
         }
-
-        .intro-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.click-to-start {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10001;
-}
-
-.start-btn {
-    background: linear-gradient(45deg, #00f2fe, #4facfe);
-    border: none;
-    border-radius: 12px;
-    padding: 20px 40px;
-    color: white;
-    font-family: 'Quicksand', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 25px rgba(0, 242, 254, 0.3);
-}
-
-.start-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 242, 254, 0.4);
-}
-
-.start-btn:active {
-    transform: translateY(-1px);
-}
-
-.video-playing .click-to-start {
-    display: none;
-}
 
         .chat-container {
             display: flex;
@@ -841,14 +830,15 @@
 </head>
 <body>
 <div class="initial-loading" id="introScreen">
-    <div class="intro-content">
-        <video id="introVideo" loop playsinline preload="auto" class="loading-logo">
-            <source src="./intro.mp4" type="video/mp4">
-            <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/6830930b17c8eb685de7d075_ZULAN-23-05-2025%20(2).png" alt="WebDevGF Logo" class="loading-logo">
-        </video>
-        <div class="click-to-start">
-            <button id="startButton" class="start-btn">Click to Start</button>
+    <video id="introVideo" autoplay muted loop playsinline preload="auto" class="loading-logo">
+        <source src="./intro.mp4" type="video/mp4">
+        <img src="https://cdn.prod.website-files.com/6740d85c4e3daeef29a89470/6830930b17c8eb685de7d075_ZULAN-23-05-2025%20(2).png" alt="WebDevGF Logo" class="loading-logo">
+    </video>
+    <div class="timer-container">
+        <div class="timer-bar">
+            <div class="timer-progress"></div>
         </div>
+        <div class="timer-text">Loading...</div>
     </div>
 </div>
     <nav class="nav-bar">
@@ -1118,41 +1108,40 @@ Zulan believes in learning by doing. She guides users through:
 > For more information or support, connect with us on Twitter or join our community!`;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // NEW: Click to start video functionality
-    const startButton = document.getElementById('startButton');
-    const introVideo = document.getElementById('introVideo');
+    // Auto-play video with timer
     const introScreen = document.getElementById('introScreen');
+    const timerProgress = document.querySelector('.timer-progress');
+    const timerText = document.querySelector('.timer-text');
     
-    if (startButton && introVideo && introScreen) {
-        startButton.addEventListener('click', () => {
-            // Hide the button
-            document.querySelector('.click-to-start').style.display = 'none';
-            
-            // Start playing the video with sound
-            introVideo.play().then(() => {
-                console.log('Video started playing');
-                
-                // Wait for video duration + extra time, then fade out
-                setTimeout(() => {
-                    introScreen.classList.add('fade-out');
-                    
-                    setTimeout(() => {
-                        introScreen.remove();
-                    }, 500);
-                }, 7000); // Adjust this timing as needed
-                
-            }).catch(error => {
-                console.error('Video play failed:', error);
-                // Fallback: just fade out if video fails
-                setTimeout(() => {
-                    introScreen.classList.add('fade-out');
-                    setTimeout(() => {
-                        introScreen.remove();
-                    }, 500);
-                }, 1000);
-            });
-        });
-    }
+    const duration = 7000; // 7 seconds
+    let startTime = Date.now();
+    
+    // Update timer every 100ms
+    const updateTimer = () => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, duration - elapsed);
+        const progress = Math.min(100, (elapsed / duration) * 100);
+        
+        // Update progress bar
+        timerProgress.style.width = progress + '%';
+        
+        // Update text
+        const secondsLeft = Math.ceil(remaining / 1000);
+        timerText.textContent = secondsLeft > 0 ? `${secondsLeft}s` : 'Ready!';
+        
+        if (remaining > 0) {
+            requestAnimationFrame(updateTimer);
+        } else {
+            // Fade out when timer completes
+            introScreen.classList.add('fade-out');
+            setTimeout(() => {
+                introScreen.remove();
+            }, 500);
+        }
+    };
+    
+    // Start timer
+    updateTimer();
 
     // Existing 3D viewer code
     const viewer = document.getElementById('characterViewer');
